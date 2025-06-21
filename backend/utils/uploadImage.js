@@ -9,7 +9,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Convert buffer to readable stream
+// Convert buffer to readable stream 
 const bufferToStream = (buffer) => {
   const readable = new Readable();
   readable._read = () => { };
