@@ -1,3 +1,5 @@
+// server.js (Your existing file - No changes needed)
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -14,7 +16,7 @@ app.use(cors({
   credentials: true,
 }));
 
-// Serve static files (e.g., uploaded images)
+// This line is now CRITICAL. It serves the files from the 'uploads' folder.
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // MongoDB Connection
