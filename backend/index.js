@@ -1,43 +1,29 @@
-  // server.js (Your existing file - No changes needed)
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+require("dotenv").config();
 
-  const express = require("express");
-  const mongoose = require("mongoose");
-  const cors = require("cors");
-  const path = require("path");
-  require("dotenv").config();
+const app = express();
+const PORT = process.env.PORT || 5000;
 
-  const app = express();
-  const PORT = process.env.PORT || 5000;
+app.use(cors({ origin: "*", credentials: true }));
+app.use(express.json());
 
-  // Middleware
-  app.use(express.json());
-  app.use(cors({
-    origin: "*",
-    credentials: true,
-  }));
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch(err => console.error("❌ MongoDB connection error:", err));
 
-  // This line is now CRITICAL. It serves the files from the 'uploads' folder.
-  app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+const addItems = require("./routes/addItems");
+const getItems = require("./routes/getItems");
 
-  // MongoDB Connection
-  mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log("✅ MongoDB connected"))
-    .catch(err => console.error("❌ MongoDB connection error:", err));
+app.use(addItems);
+app.use(getItems);
 
+app.get("/", (req, res) => {
+  res.send("✅ Backend running with Cloudinary and MongoDB");
+});
 
-  // Routes
-  const addItems = require("./routes/addItems");
-  const getItems = require("./routes/getItems");
-
-  app.use(addItems);
-  app.use(getItems);
-
-  // Default route
-  app.get("/", (req, res) => {
-    res.send("✅ Backend is running with MongoDB!");
-  });
-
-  // Start server
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running at http://localhost:${PORT}`);
-  });
+app.listen(PORT, () => {
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
+});
+ 

@@ -1,28 +1,23 @@
-// routes/addItems.js
-
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const path = require("path");
 const Item = require("../models/itemsModel");
+const cloudinary = require("../utils/cloudinary");
+const streamifier = require("streamifier");
 
-// --- Multer Configuration ---
-// 1. Change storage to diskStorage to save files to the server
-const storage = multer.diskStorage({
-  // Define the destination folder for uploads
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
-  },
-  // Define how the files should be named to avoid conflicts
-  filename: function (req, file, cb) {
-    // A unique name: fieldname-timestamp.extension
-    cb(null, file.fieldname + "-" + Date.now() + path.extname(file.originalname));
-  },
-});
+const storage = multer.memoryStorage(); // Store files in memory
+const upload = multer({ storage });
 
-const upload = multer({ storage: storage });
+function uploadToCloudinary(buffer, folder) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream({ folder }, (err, result) => {
+      if (err) return reject(err);
+      resolve(result.secure_url);
+    });
+    streamifier.createReadStream(buffer).pipe(stream);
+  });
+}
 
-// --- Route Definition ---
 router.post(
   "/addItems",
   upload.fields([
@@ -31,44 +26,37 @@ router.post(
   ]),
   async (req, res) => {
     try {
-      // Text fields are still in req.body
       const { name, type, description } = req.body;
 
-      // 2. File objects now contain path information, not buffers
-      const coverImageFile = req.files["coverImage"] ? req.files["coverImage"][0] : null;
-      const additionalImageFiles = req.files["additionalImages"] || [];
+      const coverImageBuffer = req.files["coverImage"]?.[0]?.buffer;
+      const additionalImageBuffers = req.files["additionalImages"] || [];
 
-      // Validation
-      if (!name || !coverImageFile) {
+      if (!name || !coverImageBuffer) {
         return res.status(400).json({ message: "Item name and cover image are required." });
       }
 
-      // 3. Get the path of the saved cover image.
-      // We replace backslashes with forward slashes for URL compatibility.
-      const coverImageUrl = coverImageFile.path.replace(/\\/g, "/");
+      const coverImageUrl = await uploadToCloudinary(coverImageBuffer, "itemify/cover");
 
-      // 4. Get the paths of all saved additional images.
-      const additionalImageUrls = additionalImageFiles.map(file =>
-        file.path.replace(/\\/g, "/")
+      const additionalImageUrls = await Promise.all(
+        additionalImageBuffers.map(file =>
+          uploadToCloudinary(file.buffer, "itemify/additional")
+        )
       );
 
-      // 5. Create a new item with the file paths
       const newItem = new Item({
         name,
         type,
         description,
-        coverImage: coverImageUrl, // e.g., "uploads/coverImage-1678886400000.jpg"
-        additionalImages: additionalImageUrls, // e.g., ["uploads/additionalImages-1678886400001.png"]
+        coverImage: coverImageUrl,
+        additionalImages: additionalImageUrls,
       });
 
       const savedItem = await newItem.save();
-
-      // Send back the complete item object with the file paths
       res.status(201).json(savedItem);
 
     } catch (error) {
       console.error("Error creating item:", error);
-      res.status(500).json({ message: "Server error during item creation.", error: error.message });
+      res.status(500).json({ message: "Server error", error: error.message });
     }
   }
 );

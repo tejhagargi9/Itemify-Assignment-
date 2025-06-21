@@ -9,7 +9,7 @@ const ItemCard = ({ item, onClick }) => {
     >
       <div className="h-56 overflow-hidden">
         <img
-          src={`${import.meta.env.VITE_BACKEND_URL}/${item.coverImage}`}
+          src={item.coverImage}
           alt={item.name}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
