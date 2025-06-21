@@ -16,7 +16,7 @@ const bufferToStream = (buffer) => {
   readable.push(buffer);  
   readable.push(null);
   return readable;
-};
+}; 
 
 // Upload Image Function
 const uploadImage = async (imageBuffer, folder) => {
