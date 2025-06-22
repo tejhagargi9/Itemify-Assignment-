@@ -11,7 +11,7 @@ app.use(express.json());
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
-  .catch(err => console.error("❌ MongoDB connection error:", err));
+  .catch(err => console.error("❌ MongoDB connection error:", err)); 
 
 const addItems = require("./routes/addItems");
 const getItems = require("./routes/getItems");
@@ -19,7 +19,7 @@ const getItems = require("./routes/getItems");
 app.use(addItems);
 app.use(getItems);
 
-app.get("/", (req, res) => {
+app.get("/", (req, res) => { 
   res.send("✅ Backend running with Cloudinary and MongoDB");
 });
 
